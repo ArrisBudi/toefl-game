@@ -8,8 +8,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Mic, Square, RotateCcw, Volume2, Award, Timer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase, createGameSession, completeGameSession } from '@/lib/supabase';
-import type { ListeningQuestion, GameSession } from '@/types';
+import { supabase, createGameSession, completeGameSession } from '../../lib/supabase';
+import type { ListeningQuestion, GameSession } from '../../types';
 
 interface ListeningGameProps {
   userId: string;
@@ -61,7 +61,7 @@ const QUESTIONS: ListeningQuestion[] = [
   },
 ];
 
-export default function ListeningGame({ userId, userLevel, onComplete, onExit }: ListeningGameProps) {
+export function ListeningGame({ userId, userLevel, onComplete, onExit }: ListeningGameProps) {
   // State Management
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -75,19 +75,19 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   const [attempts, setAttempts] = useState(0);
   const [timeElapsed, setTimeElapsed] = useState(0);
-  
+
   // Audio & Recording Refs
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const recordedAudioRef = useRef<HTMLAudioElement | null>(null);
-  
+
   // Timer
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  
+  const timerRef = useRef<number | null>(null);
+
   const currentQuestion = QUESTIONS[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / QUESTIONS.length) * 100;
-  
+
   // Initialize Game Session
   useEffect(() => {
     const initSession = async () => {
@@ -103,14 +103,14 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
         console.error('Failed to create session:', error);
       }
     };
-    
+
     initSession();
-    
+
     // Start timer
     timerRef.current = setInterval(() => {
       setTimeElapsed(prev => prev + 1);
     }, 1000);
-    
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (audioRef.current) audioRef.current.pause();
@@ -119,7 +119,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
       }
     };
   }, []);
-  
+
   // Play Audio
   const handlePlayAudio = () => {
     if (!audioRef.current) {
@@ -127,7 +127,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
       audioRef.current.playbackRate = playbackSpeed;
       audioRef.current.onended = () => setIsPlaying(false);
     }
-    
+
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -136,7 +136,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
       setIsPlaying(true);
     }
   };
-  
+
   // Change Playback Speed
   const handleSpeedChange = (speed: number) => {
     setPlaybackSpeed(speed);
@@ -144,7 +144,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
       audioRef.current.playbackRate = speed;
     }
   };
-  
+
   // Start Recording
   const handleStartRecording = async () => {
     try {
@@ -152,23 +152,23 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       recordedChunksRef.current = [];
-      
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           recordedChunksRef.current.push(event.data);
         }
       };
-      
+
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
         const audioUrl = URL.createObjectURL(blob);
         recordedAudioRef.current = new Audio(audioUrl);
         setHasRecorded(true);
-        
+
         // Auto-score after recording
         scoreRecording(blob);
       };
-      
+
       mediaRecorder.start();
       setIsRecording(true);
       setAttempts(prev => prev + 1);
@@ -177,7 +177,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
       alert('Tidak bisa akses microphone. Cek browser permissions.');
     }
   };
-  
+
   // Stop Recording
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -186,25 +186,25 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
       setIsRecording(false);
     }
   };
-  
+
   // Play Recorded Audio
   const handlePlayRecording = () => {
     if (recordedAudioRef.current) {
       recordedAudioRef.current.play();
     }
   };
-  
+
   // Score Recording (Simplified - In production use Speech Recognition API)
   const scoreRecording = async (blob: Blob) => {
     // Simplified scoring: Random accuracy for demo
     // In production: Use Web Speech API or server-side STT
     const mockAccuracy = Math.random() * 40 + 60; // 60-100%
     const earnedPoints = mockAccuracy >= 80 ? 10 : mockAccuracy >= 60 ? 7 : 5;
-    
+
     setScore(earnedPoints);
     setTotalScore(prev => prev + earnedPoints);
     setShowFeedback(true);
-    
+
     if (mockAccuracy < 80) {
       setMistakes(prev => [...prev, {
         question_number: currentQuestionIndex + 1,
@@ -215,39 +215,39 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
       }]);
     }
   };
-  
+
   // Next Question
   const handleNextQuestion = () => {
     setShowFeedback(false);
     setHasRecorded(false);
     setScore(0);
     setAttempts(0);
-    
+
     // Reset audio
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
     setIsPlaying(false);
-    
+
     if (currentQuestionIndex < QUESTIONS.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       handleFinishGame();
     }
   };
-  
+
   // Retry Current Question
   const handleRetry = () => {
     setShowFeedback(false);
     setHasRecorded(false);
     setScore(0);
   };
-  
+
   // Finish Game
   const handleFinishGame = async () => {
     if (!sessionId) return;
-    
+
     try {
       const session = await completeGameSession(
         sessionId,
@@ -256,20 +256,20 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
         mistakes,
         { questions_completed: QUESTIONS.length, time_elapsed: timeElapsed }
       );
-      
+
       onComplete(session);
     } catch (error) {
       console.error('Failed to complete session:', error);
     }
   };
-  
+
   // Format Time
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4">
       <div className="max-w-4xl mx-auto">
@@ -291,7 +291,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
               Exit
             </button>
           </div>
-          
+
           {/* Progress Bar */}
           <div className="mt-4">
             <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -310,7 +310,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
               />
             </div>
           </div>
-          
+
           {/* Score */}
           <div className="mt-4 flex justify-between items-center bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-lg">
             <div className="flex items-center gap-2">
@@ -324,7 +324,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
             </div>
           </div>
         </div>
-        
+
         {/* Main Content */}
         <div className="bg-white rounded-b-2xl shadow-lg p-8">
           <AnimatePresence mode="wait">
@@ -339,33 +339,31 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                 {/* Question Info */}
                 <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
                   <div className="flex items-center justify-between mb-4">
-                    <span className={`px-4 py-1 rounded-full text-sm font-semibold ${
-                      currentQuestion.difficulty === 'easy' ? 'bg-green-200 text-green-800' :
+                    <span className={`px-4 py-1 rounded-full text-sm font-semibold ${currentQuestion.difficulty === 'easy' ? 'bg-green-200 text-green-800' :
                       currentQuestion.difficulty === 'medium' ? 'bg-yellow-200 text-yellow-800' :
-                      'bg-red-200 text-red-800'
-                    }`}>
+                        'bg-red-200 text-red-800'
+                      }`}>
                       Level: {currentQuestion.difficulty.toUpperCase()}
                     </span>
                     <span className="text-gray-600 text-sm">
                       {currentQuestion.expected_words.length} kata
                     </span>
                   </div>
-                  
+
                   {/* Audio Player */}
                   <div className="bg-white rounded-lg p-6 shadow-sm">
                     <div className="flex items-center justify-center gap-4 mb-4">
                       <button
                         onClick={handlePlayAudio}
-                        className={`p-6 rounded-full transition-all transform hover:scale-110 ${
-                          isPlaying 
-                            ? 'bg-red-500 hover:bg-red-600' 
-                            : 'bg-blue-500 hover:bg-blue-600'
-                        } text-white shadow-lg`}
+                        className={`p-6 rounded-full transition-all transform hover:scale-110 ${isPlaying
+                          ? 'bg-red-500 hover:bg-red-600'
+                          : 'bg-blue-500 hover:bg-blue-600'
+                          } text-white shadow-lg`}
                       >
                         {isPlaying ? <Pause size={32} /> : <Play size={32} />}
                       </button>
                     </div>
-                    
+
                     {/* Playback Speed */}
                     <div className="flex items-center justify-center gap-2 mb-4">
                       <Volume2 size={20} className="text-gray-500" />
@@ -374,17 +372,16 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                         <button
                           key={speed}
                           onClick={() => handleSpeedChange(speed)}
-                          className={`px-3 py-1 rounded-lg text-sm transition ${
-                            playbackSpeed === speed
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                          }`}
+                          className={`px-3 py-1 rounded-lg text-sm transition ${playbackSpeed === speed
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                            }`}
                         >
                           {speed}×
                         </button>
                       ))}
                     </div>
-                    
+
                     {/* Waveform Placeholder */}
                     <div className="h-24 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
                       <div className="flex items-end gap-1 h-16">
@@ -393,8 +390,8 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                             key={i}
                             className="w-1 bg-blue-500 rounded-t"
                             animate={{
-                              height: isPlaying 
-                                ? `${Math.random() * 100}%` 
+                              height: isPlaying
+                                ? `${Math.random() * 100}%`
                                 : '20%'
                             }}
                             transition={{ duration: 0.2, repeat: isPlaying ? Infinity : 0 }}
@@ -403,7 +400,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Expected Text (Hidden until after recording) */}
                   {hasRecorded && (
                     <motion.div
@@ -418,14 +415,14 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                     </motion.div>
                   )}
                 </div>
-                
+
                 {/* Recording Controls */}
                 <div className="bg-purple-50 rounded-xl p-6 border-2 border-purple-200">
                   <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <Mic size={24} className="text-purple-600" />
                     Rekam Suara Kamu
                   </h3>
-                  
+
                   <div className="space-y-4">
                     {/* Record Button */}
                     {!hasRecorded && (
@@ -449,7 +446,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                         )}
                       </div>
                     )}
-                    
+
                     {/* Recording Animation */}
                     {isRecording && (
                       <motion.div
@@ -461,7 +458,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                         <span className="text-red-600 font-semibold">Recording...</span>
                       </motion.div>
                     )}
-                    
+
                     {/* Playback Recorded */}
                     {hasRecorded && (
                       <div className="space-y-3">
@@ -481,7 +478,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                             Rekam Ulang
                           </button>
                         </div>
-                        
+
                         <p className="text-center text-sm text-gray-600">
                           Attempt {attempts} - Klik "Next" jika sudah selesai
                         </p>
@@ -489,7 +486,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                     )}
                   </div>
                 </div>
-                
+
                 {/* Next Button (only after recording) */}
                 {hasRecorded && showFeedback && (
                   <div className="flex justify-center">
@@ -510,18 +507,17 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center space-y-6"
               >
-                <div className={`inline-block p-8 rounded-full ${
-                  score >= 9 ? 'bg-green-100' : score >= 7 ? 'bg-yellow-100' : 'bg-orange-100'
-                }`}>
+                <div className={`inline-block p-8 rounded-full ${score >= 9 ? 'bg-green-100' : score >= 7 ? 'bg-yellow-100' : 'bg-orange-100'
+                  }`}>
                   <span className="text-6xl">
                     {score >= 9 ? '🎉' : score >= 7 ? '👍' : '💪'}
                   </span>
                 </div>
-                
+
                 <h2 className="text-3xl font-bold text-gray-800">
                   {score >= 9 ? 'Perfect Echo!' : score >= 7 ? 'Good Job!' : 'Keep Practicing!'}
                 </h2>
-                
+
                 <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-2xl p-8">
                   <p className="text-5xl font-bold text-gray-800 mb-2">
                     +{score} Points
@@ -530,7 +526,7 @@ export default function ListeningGame({ userId, userLevel, onComplete, onExit }:
                     Accuracy: {score >= 9 ? '90-100%' : score >= 7 ? '70-89%' : '50-69%'}
                   </p>
                 </div>
-                
+
                 <div className="flex justify-center gap-4 pt-4">
                   <button
                     onClick={handleRetry}

@@ -8,8 +8,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, Square, Play, RotateCcw, Clock, Award, Lightbulb, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase, createGameSession, completeGameSession } from '@/lib/supabase';
-import type { SpeakingQuestion, Template, GameSession } from '@/types';
+import { supabase, createGameSession, completeGameSession } from '../../lib/supabase';
+import type { SpeakingQuestion, Template, GameSession } from '../../types';
 
 interface SpeakingGameProps {
   userId: string;
@@ -116,7 +116,7 @@ const COLOR_STYLES = {
   red: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-700', button: 'bg-red-500 hover:bg-red-600' },
 };
 
-export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: SpeakingGameProps) {
+export function SpeakingGame({ userId, userLevel, onComplete, onExit }: SpeakingGameProps) {
   // State Management
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -130,19 +130,19 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
   const [mistakes, setMistakes] = useState<any[]>([]);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [detectedKeywords, setDetectedKeywords] = useState<string[]>([]);
-  
+
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const recordedAudioRef = useRef<HTMLAudioElement | null>(null);
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const gameTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
+  const recordingTimerRef = useRef<number | null>(null);
+  const gameTimerRef = useRef<number | null>(null);
+
   const currentQuestion = QUESTIONS[currentQuestionIndex];
   const currentTemplate = currentQuestion.template;
   const colorStyle = COLOR_STYLES[currentTemplate.color_code];
   const progress = ((currentQuestionIndex + 1) / QUESTIONS.length) * 100;
-  
+
   // Initialize Session
   useEffect(() => {
     const initSession = async () => {
@@ -158,14 +158,14 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
         console.error('Failed to create session:', error);
       }
     };
-    
+
     initSession();
-    
+
     // Game timer
     gameTimerRef.current = setInterval(() => {
       setTimeElapsed(prev => prev + 1);
     }, 1000);
-    
+
     return () => {
       if (gameTimerRef.current) clearInterval(gameTimerRef.current);
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
@@ -174,17 +174,17 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
       }
     };
   }, []);
-  
+
   // Auto-detect Template
   useEffect(() => {
     // Show template hint after 3 seconds
     const timer = setTimeout(() => {
       setShowTemplate(true);
     }, 3000);
-    
+
     return () => clearTimeout(timer);
   }, [currentQuestionIndex]);
-  
+
   // Start Recording
   const handleStartRecording = async () => {
     try {
@@ -192,27 +192,27 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       recordedChunksRef.current = [];
-      
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           recordedChunksRef.current.push(event.data);
         }
       };
-      
+
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
         const audioUrl = URL.createObjectURL(blob);
         recordedAudioRef.current = new Audio(audioUrl);
         setHasRecorded(true);
-        
+
         // Auto-score
         scoreRecording();
       };
-      
+
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingDuration(0);
-      
+
       // Recording timer
       recordingTimerRef.current = setInterval(() => {
         setRecordingDuration(prev => {
@@ -228,33 +228,33 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
       alert('Tidak bisa akses microphone. Cek browser permissions.');
     }
   };
-  
+
   // Stop Recording
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       setIsRecording(false);
-      
+
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
       }
     }
   };
-  
+
   // Score Recording
   const scoreRecording = () => {
     // Simplified: Mock keyword detection
     // In production: Use Web Speech API transcription
-    
+
     const mockDetectedKeywords = currentQuestion.keywords_to_detect
       .filter(() => Math.random() > 0.3); // Random 70% detection
-    
+
     setDetectedKeywords(mockDetectedKeywords);
-    
+
     const keywordMatchRate = mockDetectedKeywords.length / currentQuestion.keywords_to_detect.length;
     const timingScore = recordingDuration >= 30 && recordingDuration <= 50 ? 1 : 0.7;
-    
+
     let earnedPoints = 0;
     if (keywordMatchRate >= 0.8 && timingScore === 1) {
       earnedPoints = 50; // Perfect
@@ -263,11 +263,11 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
     } else {
       earnedPoints = 20; // Basic
     }
-    
+
     setScore(earnedPoints);
     setTotalScore(prev => prev + earnedPoints);
     setShowFeedback(true);
-    
+
     if (earnedPoints < 35) {
       setMistakes(prev => [...prev, {
         question_number: currentQuestionIndex + 1,
@@ -277,14 +277,14 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
       }]);
     }
   };
-  
+
   // Play Recording
   const handlePlayRecording = () => {
     if (recordedAudioRef.current) {
       recordedAudioRef.current.play();
     }
   };
-  
+
   // Next Question
   const handleNextQuestion = () => {
     setShowFeedback(false);
@@ -293,14 +293,14 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
     setScore(0);
     setRecordingDuration(0);
     setDetectedKeywords([]);
-    
+
     if (currentQuestionIndex < QUESTIONS.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
       handleFinishGame();
     }
   };
-  
+
   // Retry
   const handleRetry = () => {
     setShowFeedback(false);
@@ -309,11 +309,11 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
     setRecordingDuration(0);
     setDetectedKeywords([]);
   };
-  
+
   // Finish Game
   const handleFinishGame = async () => {
     if (!sessionId) return;
-    
+
     try {
       const session = await completeGameSession(
         sessionId,
@@ -322,20 +322,20 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
         mistakes,
         { questions_completed: QUESTIONS.length, time_elapsed: timeElapsed }
       );
-      
+
       onComplete(session);
     } catch (error) {
       console.error('Failed to complete session:', error);
     }
   };
-  
+
   // Format Time
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 p-4">
       <div className="max-w-5xl mx-auto">
@@ -357,7 +357,7 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
               Exit
             </button>
           </div>
-          
+
           {/* Progress */}
           <div className="mt-4">
             <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -373,7 +373,7 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
               />
             </div>
           </div>
-          
+
           {/* Score */}
           <div className="mt-4 bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg">
             <div className="flex justify-between items-center">
@@ -389,7 +389,7 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
             </div>
           </div>
         </div>
-        
+
         {/* Main Content */}
         <div className="bg-white rounded-b-2xl shadow-lg p-8">
           <AnimatePresence mode="wait">
@@ -416,19 +416,19 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="bg-white rounded-lg p-6 shadow-sm">
                     <p className="text-2xl font-bold text-gray-800 mb-4">
                       "{currentQuestion.question_text}"
                     </p>
-                    
+
                     <div className="flex items-center gap-2 text-gray-600">
                       <Clock size={20} />
                       <span>Time Limit: {currentQuestion.time_limit_seconds} seconds</span>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Template Hint */}
                 <AnimatePresence>
                   {showTemplate && (
@@ -455,14 +455,14 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
                     </motion.div>
                   )}
                 </AnimatePresence>
-                
+
                 {/* Recording Section */}
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border-2 border-gray-300">
                   <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <Mic size={24} className="text-red-600" />
                     Rekam Jawaban Kamu ({currentQuestion.time_limit_seconds}s)
                   </h3>
-                  
+
                   <div className="space-y-4">
                     {/* Recording Timer */}
                     {isRecording && (
@@ -488,7 +488,7 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
                         </div>
                       </motion.div>
                     )}
-                    
+
                     {/* Record Button */}
                     {!hasRecorded && (
                       <div className="flex justify-center">
@@ -511,7 +511,7 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
                         )}
                       </div>
                     )}
-                    
+
                     {/* Playback */}
                     {hasRecorded && (
                       <div className="space-y-3">
@@ -523,7 +523,7 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
                             </span>
                           </div>
                         </div>
-                        
+
                         <div className="flex justify-center gap-3">
                           <button
                             onClick={handlePlayRecording}
@@ -544,7 +544,7 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
                     )}
                   </div>
                 </div>
-                
+
                 {/* Submit Button */}
                 {hasRecorded && showFeedback && (
                   <div className="flex justify-center">
@@ -565,18 +565,17 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center space-y-6"
               >
-                <div className={`inline-block p-8 rounded-full ${
-                  score >= 45 ? 'bg-green-100' : score >= 30 ? 'bg-yellow-100' : 'bg-orange-100'
-                }`}>
+                <div className={`inline-block p-8 rounded-full ${score >= 45 ? 'bg-green-100' : score >= 30 ? 'bg-yellow-100' : 'bg-orange-100'
+                  }`}>
                   <span className="text-6xl">
                     {score >= 45 ? '🌟' : score >= 30 ? '👍' : '💪'}
                   </span>
                 </div>
-                
+
                 <h2 className="text-3xl font-bold text-gray-800">
                   {score >= 45 ? 'Excellent!' : score >= 30 ? 'Good Job!' : 'Keep Trying!'}
                 </h2>
-                
+
                 <div className={`${colorStyle.bg} rounded-2xl p-8 border-4 ${colorStyle.border}`}>
                   <p className="text-5xl font-bold text-gray-800 mb-2">
                     +{score} Points
@@ -584,7 +583,7 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
                   <p className="text-gray-600 mb-4">
                     Template Match: {score >= 45 ? '90%+' : score >= 30 ? '70-89%' : '50-69%'}
                   </p>
-                  
+
                   {/* Detected Keywords */}
                   <div className="mt-4">
                     <p className="text-sm font-semibold text-gray-700 mb-2">
@@ -602,7 +601,7 @@ export default function SpeakingGame({ userId, userLevel, onComplete, onExit }: 
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-center gap-4 pt-4">
                   <button
                     onClick={handleRetry}

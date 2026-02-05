@@ -92,7 +92,12 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout>
-                  <ListeningGame />
+                  <ListeningGame
+                    userId="dummy-user"
+                    userLevel={1}
+                    onComplete={() => console.log('Listening Complete')}
+                    onExit={() => window.history.back()}
+                  />
                 </Layout>
               </ProtectedRoute>
             }
@@ -102,7 +107,12 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout>
-                  <SpeakingGame />
+                  <SpeakingGame
+                    userId="dummy-user"
+                    userLevel={1}
+                    onComplete={() => console.log('Speaking Complete')}
+                    onExit={() => window.history.back()}
+                  />
                 </Layout>
               </ProtectedRoute>
             }

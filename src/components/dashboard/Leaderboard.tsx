@@ -58,7 +58,7 @@ export const Leaderboard: React.FC = () => {
         setMyRank({
           rank: myData.rank,
           user_id: myData.user_id,
-          full_name: myData.profiles.full_name,
+          full_name: (myData.profiles as any).full_name,
           total_points: myData.total_points,
           level: myData.level,
           games_played: myData.games_played
@@ -110,31 +110,28 @@ export const Leaderboard: React.FC = () => {
         <div className="flex space-x-2">
           <button
             onClick={() => setFilter('all')}
-            className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-              filter === 'all'
+            className={`px-6 py-2 rounded-lg font-semibold transition-colors ${filter === 'all'
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+              }`}
           >
             All Time
           </button>
           <button
             onClick={() => setFilter('week')}
-            className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-              filter === 'week'
+            className={`px-6 py-2 rounded-lg font-semibold transition-colors ${filter === 'week'
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+              }`}
           >
             This Week
           </button>
           <button
             onClick={() => setFilter('month')}
-            className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
-              filter === 'month'
+            className={`px-6 py-2 rounded-lg font-semibold transition-colors ${filter === 'month'
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+              }`}
           >
             This Month
           </button>
@@ -160,13 +157,12 @@ export const Leaderboard: React.FC = () => {
       {/* Top 3 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {entries.slice(0, 3).map((entry, index) => (
-          <div 
+          <div
             key={entry.user_id}
-            className={`rounded-lg shadow-lg p-6 text-center transform transition-all hover:scale-105 ${
-              index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-500' :
-              index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400' :
-              'bg-gradient-to-br from-orange-400 to-orange-500'
-            }`}
+            className={`rounded-lg shadow-lg p-6 text-center transform transition-all hover:scale-105 ${index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-500' :
+                index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400' :
+                  'bg-gradient-to-br from-orange-400 to-orange-500'
+              }`}
           >
             <div className="text-6xl mb-4">{getMedalEmoji(entry.rank)}</div>
             <div className="font-bold text-xl mb-2">{entry.full_name}</div>
@@ -190,13 +186,12 @@ export const Leaderboard: React.FC = () => {
           </thead>
           <tbody>
             {entries.slice(3).map((entry, index) => (
-              <tr 
+              <tr
                 key={entry.user_id}
-                className={`border-b ${
-                  myRank && entry.user_id === myRank.user_id
+                className={`border-b ${myRank && entry.user_id === myRank.user_id
                     ? 'bg-purple-50 font-bold'
                     : 'hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 <td className="px-6 py-4">#{entry.rank}</td>
                 <td className="px-6 py-4">
