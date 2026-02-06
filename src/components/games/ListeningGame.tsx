@@ -18,10 +18,15 @@ interface ListeningGameProps {
   onExit: () => void;
 }
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const AUDIO_BASE_URL = supabaseUrl
+  ? `${supabaseUrl}/storage/v1/object/public/audio-templates/`
+  : '/audio/';
+
 const QUESTIONS: ListeningQuestion[] = [
   {
     id: '1',
-    audio_url: '/audio/08_REVISI_Practice_Sentence_Level_1.mp3',
+    audio_url: `${AUDIO_BASE_URL}08_REVISI_Practice_Sentence_Level_1.mp3`,
     text: 'The library is open.',
     difficulty: 'easy',
     duration_seconds: 3,
@@ -29,7 +34,7 @@ const QUESTIONS: ListeningQuestion[] = [
   },
   {
     id: '2',
-    audio_url: '/audio/09_REVISI_Practice_Sentence_Level_2.mp3',
+    audio_url: `${AUDIO_BASE_URL}09_REVISI_Practice_Sentence_Level_2.mp3`,
     text: 'I really enjoy studying English.',
     difficulty: 'easy',
     duration_seconds: 4,
@@ -37,7 +42,7 @@ const QUESTIONS: ListeningQuestion[] = [
   },
   {
     id: '3',
-    audio_url: '/audio/10_REVISI_Practice_Sentence_Level_3.mp3',
+    audio_url: `${AUDIO_BASE_URL}10_REVISI_Practice_Sentence_Level_3.mp3`,
     text: 'My favorite place is the local library because it is quiet.',
     difficulty: 'medium',
     duration_seconds: 6,
@@ -45,7 +50,7 @@ const QUESTIONS: ListeningQuestion[] = [
   },
   {
     id: '4',
-    audio_url: '/audio/11_REVISI_Practice_Sentence_Level_4.mp3',
+    audio_url: `${AUDIO_BASE_URL}11_REVISI_Practice_Sentence_Level_4.mp3`,
     text: 'Students should take notes during lectures because it helps them remember important information.',
     difficulty: 'medium',
     duration_seconds: 8,
@@ -53,7 +58,7 @@ const QUESTIONS: ListeningQuestion[] = [
   },
   {
     id: '5',
-    audio_url: '/audio/12_REVISI_Practice_Sentence_Level_5.mp3',
+    audio_url: `${AUDIO_BASE_URL}12_REVISI_Practice_Sentence_Level_5.mp3`,
     text: 'Before leaving the gallery, please make sure to return your audio guide at the entrance.',
     difficulty: 'hard',
     duration_seconds: 10,

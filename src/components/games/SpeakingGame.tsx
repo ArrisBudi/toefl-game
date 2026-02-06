@@ -18,6 +18,11 @@ interface SpeakingGameProps {
   onExit: () => void;
 }
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const AUDIO_BASE_URL = supabaseUrl
+  ? `${supabaseUrl}/storage/v1/object/public/audio-templates/`
+  : '/audio/';
+
 // Color-Coded Templates
 const TEMPLATES: Template[] = [
   {
@@ -29,7 +34,7 @@ const TEMPLATES: Template[] = [
     template_text: 'I remember when I was in high school. It was my favorite time. I studied with my friends. We learned many subjects together. It was really fun. I enjoyed that experience very much.',
     template_text_indonesian: 'Template untuk pertanyaan tentang masa lalu atau pengalaman',
     keywords: ['remember', 'experienced', 'was', 'past'],
-    audio_url: '/audio/template1.mp3',
+    audio_url: `${AUDIO_BASE_URL}template1.mp3`,
     example_questions: ['Tell me about a memorable experience', 'What did you do last summer?'],
     created_at: new Date().toISOString(),
   },
@@ -42,7 +47,7 @@ const TEMPLATES: Template[] = [
     template_text: 'I prefer studying at the library. It is quiet there. I can focus on my work. The library has many books. I like the environment. It helps me study better.',
     template_text_indonesian: 'Template untuk pertanyaan tentang kesukaan atau preferensi',
     keywords: ['prefer', 'favorite', 'like', 'enjoy'],
-    audio_url: '/audio/template2.mp3',
+    audio_url: `${AUDIO_BASE_URL}template2.mp3`,
     example_questions: ['What is your favorite place to study?', 'Do you prefer online or offline classes?'],
     created_at: new Date().toISOString(),
   },
@@ -55,7 +60,7 @@ const TEMPLATES: Template[] = [
     template_text: 'I agree with this idea. It is important for students. This helps them learn better. Many people support this. I think it is a good solution. We should do this.',
     template_text_indonesian: 'Template untuk pertanyaan tentang pendapat atau persetujuan',
     keywords: ['agree', 'disagree', 'think', 'opinion'],
-    audio_url: '/audio/template3.mp3',
+    audio_url: `${AUDIO_BASE_URL}template3.mp3`,
     example_questions: ['Do you agree that homework is important?', 'What is your opinion about uniforms?'],
     created_at: new Date().toISOString(),
   },
@@ -68,7 +73,7 @@ const TEMPLATES: Template[] = [
     template_text: 'I think we should reduce homework. Students have too much work. This causes stress. If we reduce homework, students can rest more. This is a better solution. Schools should do this.',
     template_text_indonesian: 'Template untuk pertanyaan tentang masalah dan solusi',
     keywords: ['should', 'problem', 'solution', 'fix'],
-    audio_url: '/audio/template4.mp3',
+    audio_url: `${AUDIO_BASE_URL}template4.mp3`,
     example_questions: ['What should schools do to reduce stress?', 'How can we solve this problem?'],
     created_at: new Date().toISOString(),
   },
